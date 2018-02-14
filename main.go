@@ -20,6 +20,64 @@ func printRow(longest int, first string, second string) {
 	fmt.Printf("%-"+width+"v%v\n", first, second)
 }
 
+func printCollectionsList(server *btrdb.BTrDB, collections []string) {
+	longest := 0
+	for _, col := range collections {
+		if len(col) > longest {
+			longest = len(col)
+		}
+	}
+	printRow(longest, "Collection name", "Stream count")
+	for _, collection := range collections {
+		streams, err := server.LookupStreams(context.Background(), collection, false, nil, nil)
+		streamsCount := ""
+		if err != nil {
+			streamsCount = fmt.Sprintf("Error getting streams for this collection %v", err)
+		} else {
+			streamsCount = fmt.Sprintf("%v", len(streams))
+		}
+		printRow(longest, collection, streamsCount)
+	}
+}
+
+func printCollectionDetails(server *btrdb.BTrDB, collection string) {
+	streams, err := server.LookupStreams(context.Background(), collection, false, nil, nil)
+	if err != nil {
+		fmt.Printf("Error finding streams for %v: %v\n", collection, err)
+		return
+	}
+	fmt.Println("Collection: " + collection + ":")
+	fmt.Println("Streams:")
+	for _, stream := range streams {
+		fmt.Println(" * UUID: " + stream.UUID().String())
+
+		fmt.Println(" * Tags: ")
+		tags, err := stream.Tags(context.Background())
+		if err != nil {
+			fmt.Printf("     - Error getting tags: %v\n", err)
+		} else if len(tags) == 0 {
+			fmt.Println("     - None")
+		} else {
+			for k, v := range tags {
+				fmt.Printf("     - %v: %v\n", k, v)
+			}
+		}
+
+		fmt.Println(" * Annontations: ")
+		ann, _, err := stream.Annotations(context.Background())
+		if err != nil {
+			fmt.Printf("     - Error getting annotations: %v\n", err)
+		} else if len(ann) == 0 {
+			fmt.Println("     - None")
+		} else {
+			for k, v := range ann {
+				fmt.Printf("     - %v: %v\n", k, v)
+			}
+		}
+		fmt.Println()
+	}
+}
+
 func main() {
 	if len(os.Args) != 2 {
 		fmt.Printf("Usage: btrdb-ls <config yaml>\n")
@@ -50,21 +108,9 @@ func main() {
 		os.Exit(1)
 	}
 
-	longest := 0
-	for _, col := range collections {
-		if len(col) > longest {
-			longest = len(col)
-		}
-	}
-	printRow(longest, "Collection name", "Stream count")
-	for _, collection := range collections {
-		streams, err := server.LookupStreams(context.Background(), collection, false, nil, nil)
-		streamsCount := ""
-		if err != nil {
-			streamsCount = fmt.Sprintf("Error getting streams for this collection %v", err)
-		} else {
-			streamsCount = fmt.Sprintf("%v", len(streams))
-		}
-		printRow(longest, collection, streamsCount)
+	if len(collections) == 1 {
+		printCollectionDetails(server, collections[0])
+	} else {
+		printCollectionsList(server, collections)
 	}
 }
