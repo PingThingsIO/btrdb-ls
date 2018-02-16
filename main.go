@@ -21,6 +21,11 @@ func printRow(longest int, first string, second string) {
 }
 
 func printCollectionsList(server *btrdb.BTrDB, collections []string) {
+    if len(collections) == 0 {
+        fmt.Println("No collections found!")
+        return
+    }
+
 	longest := 0
 	for _, col := range collections {
 		if len(col) > longest {
