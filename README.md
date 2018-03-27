@@ -24,7 +24,7 @@ pingthingsio/sensor3                 19
 
 
 If only one collection is found, a detail view of the collection
-and it's streams with be output. We can accomplish this by making
+and its streams with be output. We can accomplish this by making
 our prefix more specific:
 
 ``` yaml
